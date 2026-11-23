@@ -629,13 +629,18 @@ function deal(key,n,pool=POOLS[key]){
   return out;
 }
 
+// level banner (Easy / Medium / Hard / Pro): if a result banner is still up, wait until it clears
+let pendingLevel=null;
 function showBanner(t){
+  if(rb.classList.contains("show")){ pendingLevel=t; return; }
+  pendingLevel=null;
   const b=$("banner");
   b.className="banner t"+t; b.innerHTML=`<div class="lv">${TIER_NAME[t]}</div><div class="mx">×${MULT[t]} points</div>`;
   void b.offsetWidth; b.classList.add("show");
 }
 
 function newGame(){
+  stopConfetti(); pendingLevel=null;
   state.streak=0;
   state.daily = state.diff==="daily";
   $("shareBox").classList.add("hidden"); $("again").textContent="Play again"; $("again").className="btn primary";
@@ -844,8 +849,14 @@ function buzz(ms){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} 
 const cv=document.createElement("canvas"); cv.className="confetti"; document.body.appendChild(cv);
 const cx=cv.getContext("2d"); let parts=[], running=false, lastT=0;
 const COLORS=["#ff6b35","#ffb347","#ffd447","#3ecf8e","#6fc3ff","#c77dff","#ffffff"];
-function sizeCanvas(){ const dpr=Math.min(2,devicePixelRatio||1);
-  if(cv.width!==Math.round(innerWidth*dpr)||cv.height!==Math.round(innerHeight*dpr)){ cv.width=Math.round(innerWidth*dpr); cv.height=Math.round(innerHeight*dpr); cx.setTransform(dpr,0,0,dpr,0,0); } }
+let dprNow=1, stopAt=0;
+function sizeCanvas(){ dprNow=Math.min(2,devicePixelRatio||1);
+  const W=Math.round(innerWidth*dprNow), H=Math.round(innerHeight*dprNow);
+  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; } }
+function wipeCanvas(){ cx.setTransform(1,0,0,1,0,0); cx.clearRect(0,0,cv.width,cv.height); }
+function stopConfetti(){ parts=[]; running=false; wipeCanvas(); cv.width=cv.width; }
+// switching apps pauses animations; clear rather than leave pieces frozen on screen
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) stopConfetti(); });
 function rain(n){
   if(reduceMotion) return;
   sizeCanvas();
@@ -855,11 +866,14 @@ function rain(n){
     sway:12+Math.random()*30, freq:.8+Math.random()*1.6, phase:Math.random()*6.3,
     r:Math.random()*6.3, vr:(Math.random()-.5)*4, flip:2+Math.random()*4,
     w:6+Math.random()*6, h:4+Math.random()*5, c:COLORS[i%COLORS.length], t:0 });
+  stopAt=performance.now()+7000;                 // safety net: never more than 7 s on screen
   if(!running){ running=true; lastT=performance.now(); requestAnimationFrame(tickConfetti); }
 }
 function tickConfetti(now){
+  if(!running) return;
+  if(now>stopAt){ stopConfetti(); return; }
   const dt=Math.min(.05,(now-lastT)/1000); lastT=now;
-  cx.clearRect(0,0,innerWidth,innerHeight);
+  sizeCanvas(); wipeCanvas(); cx.setTransform(dprNow,0,0,dprNow,0,0);
   parts=parts.filter(p=>p.y<innerHeight+30 && p.t<6);
   for(const p of parts){
     p.t+=dt; p.y+=p.vy*dt; p.r+=p.vr*dt;
@@ -868,21 +882,26 @@ function tickConfetti(now){
     cx.save(); cx.globalAlpha=fade; cx.translate(x,p.y); cx.rotate(p.r); cx.fillStyle=p.c;
     cx.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.t*p.flip))+1); cx.restore();
   }
-  if(parts.length) requestAnimationFrame(tickConfetti); else { running=false; cx.clearRect(0,0,innerWidth,innerHeight); }
+  if(parts.length) requestAnimationFrame(tickConfetti); else stopConfetti();
 }
 
 // big result banner: pops in mid-screen, stays long enough to read (longer for longer text), tap to dismiss
 const rb=document.createElement("div"); rb.className="resultbanner"; rb.setAttribute("role","status"); document.body.appendChild(rb);
 let rbTimer=null;
-rb.onclick=()=>{ clearTimeout(rbTimer); rb.classList.remove("show"); };
+function hideResult(){
+  clearTimeout(rbTimer); rb.classList.remove("show");
+  // then show a level banner that was waiting, once the result banner has faded out
+  if(pendingLevel!=null){ const t=pendingLevel; setTimeout(()=>{ if(pendingLevel===t && !rb.classList.contains("show")) showBanner(t); },380); }
+}
+rb.onclick=hideResult;
 function showResult(kind, title, sub){
   $("banner").className="banner";                 // clear any level banner so the two never overlap
-  if(kind==="bad") parts=[];                      // no confetti still falling on a wrong answer
+
   rb.className="resultbanner "+kind;
   rb.innerHTML=`<div class="rt">${title}</div>${sub?`<div class="rs">${sub}</div>`:""}`;
   void rb.offsetWidth; rb.classList.add("show");
   const ms=Math.min(5000, Math.max(2400, 1600+55*(title.length+(sub||"").length)));
-  clearTimeout(rbTimer); rbTimer=setTimeout(()=>rb.classList.remove("show"), ms);
+  clearTimeout(rbTimer); rbTimer=setTimeout(hideResult, ms);
 }
 
 const centerOf=el=>{ const r=(el||$("feedback")).getBoundingClientRect(); return [r.left+r.width/2, r.top+r.height/2]; };
@@ -915,7 +934,7 @@ function celebrate(right, perfectCountry, res, picked){
   buzz(25);
   const streak = state.streak>=3 ? ` · 🔥 ${state.streak} in a row` : "";
   if(perfectCountry){
-    sfx("perfect"); rain(170);
+    sfx("perfect");   // confetti is saved for the final score
     showResult("perfect", "Perfect! 🎉", `${res.pts} points for ${name}`);
   } else {
     sfx("right");   // confetti is saved for a perfect country and the final score
@@ -927,9 +946,10 @@ function celebrate(right, perfectCountry, res, picked){
 }
 function finale(pct){
   // confetti every time the final score is shown, bigger for better scores
-  setTimeout(()=>{ sfx(pct>=.999?"finale":"perfect");
+  const onResults=()=>!$("endPanel").classList.contains("hidden");
+  setTimeout(()=>{ if(!onResults()) return; sfx(pct>=.999?"finale":"perfect");
     rain(pct>=.999?260:pct>=.8?170:pct>=.5?110:70);
-    if(pct>=.999) setTimeout(()=>rain(180),1400);
+    if(pct>=.999) setTimeout(()=>{ if(onResults()) rain(180); },1400);
   },400);
 }
 $("soundBtn").onclick=()=>{ soundOn=!soundOn; try{ localStorage.setItem("ntc_sound",soundOn?"1":"0"); }catch(e){} renderSoundBtn(); if(soundOn) sfx("right"); };
