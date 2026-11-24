@@ -111,10 +111,12 @@
   .banner.t3{border-color:var(--target)} .banner.t3 .mx{color:var(--target)}
   .banner.t4{border-color:#c77dff;box-shadow:0 0 24px #c77dff66} .banner.t4 .mx{color:#c77dff}
   .chip.tier.t4{color:#c77dff;border-color:#c77dff77}
-  .banner.show{animation:bannerPop 2.2s ease forwards}
+  .banner.t5{border-color:#ff5fd2;box-shadow:0 0 28px #ff5fd288} .banner.t5 .mx{color:#ff5fd2}
+  .chip.tier.t5{color:#ff5fd2;border-color:#ff5fd277}
+  .banner.show{animation:bannerPop 1.55s ease forwards}
   @keyframes bannerPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.85)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}
     20%{transform:translate(-50%,-50%) scale(1)}78%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
-  @media (prefers-reduced-motion:reduce){.banner.show{animation:bannerFade 2.2s linear forwards}
+  @media (prefers-reduced-motion:reduce){.banner.show{animation:bannerFade 1.55s linear forwards}
     @keyframes bannerFade{0%,85%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,-50%)}}}
   .region{flex:1 1 100%;display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:10px;padding:3px 3px 3px 12px;font-size:13px;color:var(--muted)}
   .region select{flex:1;appearance:none;-webkit-appearance:none;background:#2a3a4a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23eef3f7' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;
@@ -141,6 +143,7 @@
   .resultbanner.perfect{border-color:#ffd447;box-shadow:0 12px 40px #000a,0 0 40px #ffd44788} .resultbanner.perfect .rt{color:#ffd447;font-size:clamp(30px,9vw,40px)}
   @media (prefers-reduced-motion:reduce){.resultbanner{transition:opacity .2s}}
   .confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+  .flypts.bonus{font-size:30px;color:#ffd447;text-shadow:0 2px 10px #000c,0 0 22px #ffd447cc;white-space:nowrap}
   .flypts{position:fixed;z-index:51;pointer-events:none;font-weight:800;font-size:26px;color:var(--accent);
     text-shadow:0 2px 10px #000a,0 0 18px #ffb34788;transform:translate(-50%,-50%)}
   @keyframes popIn{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
@@ -172,7 +175,7 @@
       <span>Mode</span>
       <select id="diffSel" aria-label="Mode">
         <option value="daily" selected>Daily</option><option value="classic">Classic</option><option value="easy">Easy</option><option value="medium">Medium</option>
-        <option value="hard">Hard</option><option value="pro">Pro</option>
+        <option value="hard">Hard</option><option value="pro">Pro</option><option value="genius">Genius</option>
       </select>
     </label>
     <label class="region" id="regionBox">
@@ -343,11 +346,22 @@ const PRO_ISLANDS = new Set(["Fiji","Vanuatu","Solomon Is."]);
 // small in size but major economies (GDP over ~$20B): these stay Hard, not Pro
 const NOT_PRO = new Set(["Singapore","Bahrain","Malta","Trinidad and Tobago","Maldives"]);
 const isPro=f=>!NOT_PRO.has(f.properties.name) && (!!f.__hd || f.properties.name==="Tuvalu" || PRO_ISLANDS.has(f.properties.name));
-const POOLS = {
+// v1 levels (4 levels) - kept only so Dailies #1-#4, already played, stay exactly the same
+const POOLS_V1 = {
   easy: playable.filter(f=>EASY.has(f.properties.name)),
   medium: playable.filter(f=>MEDIUM.has(f.properties.name)),
   hard: playable.filter(f=>!EASY.has(f.properties.name) && !MEDIUM.has(f.properties.name) && !isPro(f)),
   pro: playable.filter(isPro)
+};
+const tierV1=f=>isPro(f)?4:EASY.has(f.properties.name)?1:MEDIUM.has(f.properties.name)?2:3;
+// current levels: 1 Easy ... 5 Genius, by how well-known a country is in the US, its size and how easy it is to spot
+const TIERS={"United States of America": 1, "Canada": 1, "Mexico": 1, "Brazil": 1, "Argentina": 1, "Chile": 1, "Peru": 1, "Colombia": 1, "Cuba": 1, "Greenland": 1, "United Kingdom": 1, "Ireland": 1, "France": 1, "Spain": 1, "Portugal": 1, "Italy": 1, "Germany": 1, "Switzerland": 1, "Netherlands": 1, "Greece": 1, "Norway": 1, "Sweden": 1, "Iceland": 1, "Poland": 1, "Ukraine": 1, "Russia": 1, "Turkey": 1, "Egypt": 1, "South Africa": 1, "Israel": 1, "Saudi Arabia": 1, "Iran": 1, "Iraq": 1, "Afghanistan": 1, "India": 1, "China": 1, "Japan": 1, "South Korea": 1, "North Korea": 1, "Vietnam": 1, "Australia": 1, "New Zealand": 1, "Venezuela": 2, "Bolivia": 2, "Ecuador": 2, "Uruguay": 2, "Paraguay": 2, "Jamaica": 2, "Haiti": 2, "Dominican Rep.": 2, "Panama": 2, "Costa Rica": 2, "Guatemala": 2, "Belgium": 2, "Austria": 2, "Denmark": 2, "Finland": 2, "Czechia": 2, "Hungary": 2, "Romania": 2, "Croatia": 2, "Belarus": 2, "Morocco": 2, "Algeria": 2, "Libya": 2, "Nigeria": 2, "Kenya": 2, "Ethiopia": 2, "Madagascar": 2, "Somalia": 2, "Sudan": 2, "Syria": 2, "Jordan": 2, "Lebanon": 2, "Kuwait": 2, "Qatar": 2, "United Arab Emirates": 2, "Yemen": 2, "Pakistan": 2, "Philippines": 2, "Indonesia": 2, "Thailand": 2, "Malaysia": 2, "Mongolia": 2, "Kazakhstan": 2, "Taiwan": 2, "Singapore": 2, "Nepal": 2, "Bahamas": 2, "Nicaragua": 3, "Honduras": 3, "El Salvador": 3, "Belize": 3, "Trinidad and Tobago": 3, "Guyana": 3, "Suriname": 3, "Serbia": 3, "Bulgaria": 3, "Slovakia": 3, "Slovenia": 3, "Bosnia and Herz.": 3, "Albania": 3, "Lithuania": 3, "Latvia": 3, "Estonia": 3, "Georgia": 3, "Armenia": 3, "Luxembourg": 3, "Cyprus": 3, "Malta": 3, "Montenegro": 3, "Tunisia": 3, "Ghana": 3, "Senegal": 3, "Mali": 3, "Niger": 3, "Chad": 3, "Angola": 3, "Namibia": 3, "Botswana": 3, "Zimbabwe": 3, "Zambia": 3, "Tanzania": 3, "Uganda": 3, "Rwanda": 3, "Mozambique": 3, "Cameroon": 3, "Dem. Rep. Congo": 3, "Oman": 3, "Bahrain": 3, "Palestine": 3, "Uzbekistan": 3, "Bangladesh": 3, "Myanmar": 3, "Cambodia": 3, "Laos": 3, "Sri Lanka": 3, "Papua New Guinea": 3, "Maldives": 3, "Fiji": 3, "Azerbaijan": 4, "Moldova": 4, "Macedonia": 4, "Kosovo": 4, "Monaco": 4, "Vatican": 4, "Barbados": 4, "Côte d'Ivoire": 4, "Liberia": 4, "Sierra Leone": 4, "S. Sudan": 4, "Congo": 4, "Gabon": 4, "Malawi": 4, "Mauritania": 4, "Burkina Faso": 4, "Benin": 4, "Togo": 4, "Guinea": 4, "Eritrea": 4, "Djibouti": 4, "Central African Rep.": 4, "Gambia": 4, "eSwatini": 4, "Lesotho": 4, "Bhutan": 4, "Brunei": 4, "Kyrgyzstan": 4, "Tajikistan": 4, "Turkmenistan": 4, "Timor-Leste": 4, "Mauritius": 4, "Seychelles": 4, "Saint Lucia": 4, "Samoa": 4, "Vanuatu": 4, "Solomon Is.": 4, "Andorra": 5, "Liechtenstein": 5, "San Marino": 5, "Antigua and Barb.": 5, "Dominica": 5, "Grenada": 5, "St. Kitts and Nevis": 5, "St. Vin. and Gren.": 5, "Cabo Verde": 5, "Comoros": 5, "São Tomé and Principe": 5, "Eq. Guinea": 5, "Guinea-Bissau": 5, "Burundi": 5, "Kiribati": 5, "Marshall Is.": 5, "Micronesia": 5, "Nauru": 5, "Palau": 5, "Tuvalu": 5, "Tonga": 5};
+const POOLS = {
+  easy:   playable.filter(f=>TIERS[f.properties.name]===1),
+  medium: playable.filter(f=>TIERS[f.properties.name]===2),
+  hard:   playable.filter(f=>TIERS[f.properties.name]===3),
+  pro:    playable.filter(f=>TIERS[f.properties.name]===4),
+  genius: playable.filter(f=>TIERS[f.properties.name]===5)
 };
 
 function norm(s){
@@ -556,14 +570,21 @@ const flagSrc=f=>flagIso(f.iso);
 const flagsReady=fetch("flags.json").then(r=>r.ok?r.json():Promise.reject()).then(j=>{ FLAGS=j; }).catch(()=>{});
 const STAGES=["Country","Flag","Capital"];
 // multiplier by how hard the country is: easy x1, medium x2, hard x3
-const tierOf=f=>isPro(f)?4:EASY.has(f.properties.name)?1:MEDIUM.has(f.properties.name)?2:3;
-const TIER_NAME={1:"Easy",2:"Medium",3:"Hard",4:"Pro"};
-const MULT={1:1,2:2,3:3,4:5};   // points per right answer at each level
+const tierOf=f=>TIERS[f.properties.name]||3;
+const TIER_NAME={1:"Easy",2:"Medium",3:"Hard",4:"Pro",5:"Genius"};
+const MULT={1:1,2:2,3:3,4:4,5:5};      // points per right answer at each level
+const MULT_V1={1:1,2:2,3:3,4:5};       // old scoring, for Dailies #1-#4 only
+const BONUS=1;                         // extra point for getting all three parts of a country right
+// scoring rules for the game in progress (old rules only for an old Daily)
+const tierFor=f=>state.legacy?tierV1(f):tierOf(f);
+const multFor=f=>state.legacy?MULT_V1[tierV1(f)]:MULT[tierOf(f)];
+const bonusNow=()=>state.legacy?0:BONUS;
+const maxFor=q=>q.reduce((s,f)=>s+3*multFor(f)+bonusNow(),0);
 const REGIONS={"Fiji":"Oceania","Tanzania":"Africa","Canada":"North America","United States of America":"North America","Kazakhstan":"Asia","Uzbekistan":"Asia","Papua New Guinea":"Oceania","Indonesia":"Asia","Argentina":"South America","Chile":"South America","Dem. Rep. Congo":"Africa","Somalia":"Africa","Kenya":"Africa","Sudan":"Africa","Chad":"Africa","Haiti":"Central America","Dominican Rep.":"Central America","Russia":"Europe","Bahamas":"Central America","Norway":"Europe","Greenland":"North America","Timor-Leste":"Asia","South Africa":"Africa","Lesotho":"Africa","Mexico":"North America","Uruguay":"South America","Brazil":"South America","Bolivia":"South America","Peru":"South America","Colombia":"South America","Panama":"Central America","Costa Rica":"Central America","Nicaragua":"Central America","Honduras":"Central America","El Salvador":"Central America","Guatemala":"Central America","Belize":"Central America","Venezuela":"South America","Guyana":"South America","Suriname":"South America","France":"Europe","Ecuador":"South America","Jamaica":"Central America","Cuba":"Central America","Zimbabwe":"Africa","Botswana":"Africa","Namibia":"Africa","Senegal":"Africa","Mali":"Africa","Mauritania":"Africa","Benin":"Africa","Niger":"Africa","Nigeria":"Africa","Cameroon":"Africa","Togo":"Africa","Ghana":"Africa","Côte d'Ivoire":"Africa","Guinea":"Africa","Guinea-Bissau":"Africa","Liberia":"Africa","Sierra Leone":"Africa","Burkina Faso":"Africa","Central African Rep.":"Africa","Congo":"Africa","Gabon":"Africa","Eq. Guinea":"Africa","Zambia":"Africa","Malawi":"Africa","Mozambique":"Africa","eSwatini":"Africa","Angola":"Africa","Burundi":"Africa","Israel":"Middle East","Lebanon":"Middle East","Madagascar":"Africa","Palestine":"Middle East","Gambia":"Africa","Tunisia":"Africa","Algeria":"Africa","Jordan":"Middle East","United Arab Emirates":"Middle East","Qatar":"Middle East","Kuwait":"Middle East","Iraq":"Middle East","Oman":"Middle East","Vanuatu":"Oceania","Cambodia":"Asia","Thailand":"Asia","Laos":"Asia","Myanmar":"Asia","Vietnam":"Asia","North Korea":"Asia","South Korea":"Asia","Mongolia":"Asia","India":"Asia","Bangladesh":"Asia","Bhutan":"Asia","Nepal":"Asia","Pakistan":"Asia","Afghanistan":"Asia","Tajikistan":"Asia","Kyrgyzstan":"Asia","Turkmenistan":"Asia","Iran":"Middle East","Syria":"Middle East","Armenia":"Europe","Sweden":"Europe","Belarus":"Europe","Ukraine":"Europe","Poland":"Europe","Austria":"Europe","Hungary":"Europe","Moldova":"Europe","Romania":"Europe","Lithuania":"Europe","Latvia":"Europe","Estonia":"Europe","Germany":"Europe","Bulgaria":"Europe","Greece":"Europe","Turkey":"Middle East","Albania":"Europe","Croatia":"Europe","Switzerland":"Europe","Luxembourg":"Europe","Belgium":"Europe","Netherlands":"Europe","Portugal":"Europe","Spain":"Europe","Ireland":"Europe","Solomon Is.":"Oceania","New Zealand":"Oceania","Australia":"Oceania","Sri Lanka":"Asia","China":"Asia","Taiwan":"Asia","Italy":"Europe","Denmark":"Europe","United Kingdom":"Europe","Iceland":"Europe","Azerbaijan":"Europe","Georgia":"Europe","Philippines":"Asia","Malaysia":"Asia","Brunei":"Asia","Slovenia":"Europe","Finland":"Europe","Slovakia":"Europe","Czechia":"Europe","Eritrea":"Africa","Japan":"Asia","Paraguay":"South America","Yemen":"Middle East","Saudi Arabia":"Middle East","Cyprus":"Europe","Morocco":"Africa","Egypt":"Africa","Libya":"Africa","Ethiopia":"Africa","Djibouti":"Africa","Uganda":"Africa","Rwanda":"Africa","Bosnia and Herz.":"Europe","Macedonia":"Europe","Serbia":"Europe","Montenegro":"Europe","Kosovo":"Europe","Trinidad and Tobago":"Central America","S. Sudan":"Africa","Vatican":"Europe","Micronesia":"Oceania","Marshall Is.":"Oceania","Tonga":"Oceania","Singapore":"Asia","Seychelles":"Africa","São Tomé and Principe":"Africa","San Marino":"Europe","Samoa":"Oceania","St. Vin. and Gren.":"Central America","Saint Lucia":"Central America","St. Kitts and Nevis":"Central America","Palau":"Oceania","Nauru":"Oceania","Monaco":"Europe","Mauritius":"Africa","Malta":"Europe","Maldives":"Asia","Liechtenstein":"Europe","Kiribati":"Oceania","Grenada":"Central America","Dominica":"Central America","Comoros":"Africa","Cabo Verde":"Africa","Barbados":"Central America","Bahrain":"Middle East","Antigua and Barb.":"Central America","Andorra":"Europe","Tuvalu":"Oceania"};
 countries.forEach(f=>{ f.region=REGIONS[f.properties.name]; });
 const state={region:"Global",rounds:ROUNDS,mode:"type",diff:"daily",score:0,round:0,stage:0,queue:[],results:[],res:null,tries:3,hintLevel:0,done:false};
 const modeLabel=()=>state.region!=="Global"?state.region:state.diff;
-const bestKey=()=>"ntc_bestv4_"+modeLabel();
+const bestKey=()=>"ntc_bestv5_"+modeLabel();
 function getBest(){ try{ return +localStorage.getItem(bestKey())||0; }catch(e){ return 0; } }
 // rnd is Math.random normally; in Daily it is swapped for a generator seeded by the date, so everyone gets the same picks and options
 let rnd=Math.random;
@@ -582,24 +603,26 @@ const dayNumber=(d=new Date())=>Math.round((Date.UTC(d.getFullYear(),d.getMonth(
 // Daily picks are a pure function of the date, so everyone gets the same set.
 // Rule (from Daily #3 on): a country that appeared in the Daily can't appear again for at least 7 days.
 // Dailies #1 and #2 were already played, so they keep their original picks.
-const DAILY_GAP=7, DAILY_RULE_FROM=3;
+// From Daily #5 on: one country from each of the five levels (max 4+7+10+13+16 = 50).
+const DAILY_GAP=7, DAILY_RULE_FROM=3, DAILY_V2_FROM=5;
 const dayKeyFor=n=>dayKey(new Date(2026,10,21+n-1));          // Daily number -> local date key
-function pickDaily(key, excluded){
+function pickDaily(key, excluded, n){
   const r=seeded("atlas-ace-daily|"+key);
-  const pick=(pool,n)=>{ const s=[...pool].filter(f=>!excluded.has(f.properties.name)).sort((a,b)=>a.properties.name<b.properties.name?-1:1), out=[];
-    while(out.length<n){ const f=s.splice(Math.floor(r()*s.length),1)[0]; out.push(f); } return out; };
-  return [...pick(POOLS.easy,1), ...pick(POOLS.medium,1), ...pick(POOLS.hard,2), ...pick(POOLS.pro,1)];
+  const pick=(pool,c)=>{ const s=[...pool].filter(f=>!excluded.has(f.properties.name)).sort((a,b)=>a.properties.name<b.properties.name?-1:1), out=[];
+    while(out.length<c){ const f=s.splice(Math.floor(r()*s.length),1)[0]; out.push(f); } return out; };
+  if(n<DAILY_V2_FROM) return [...pick(POOLS_V1.easy,1), ...pick(POOLS_V1.medium,1), ...pick(POOLS_V1.hard,2), ...pick(POOLS_V1.pro,1)];
+  return [...pick(POOLS.easy,1), ...pick(POOLS.medium,1), ...pick(POOLS.hard,1), ...pick(POOLS.pro,1), ...pick(POOLS.genius,1)];
 }
 const dailyCache={};
 function dailyByNumber(n){
   if(dailyCache[n]) return dailyCache[n];
-  if(n<DAILY_RULE_FROM) return dailyCache[n]=pickDaily(dayKeyFor(n), new Set());
+  if(n<DAILY_RULE_FROM) return dailyCache[n]=pickDaily(dayKeyFor(n), new Set(), n);
   // build forward from the first rule day so each day knows the previous week's countries
   for(let d=DAILY_RULE_FROM; d<=n; d++){
     if(dailyCache[d]) continue;
     const recent=new Set();
     for(let back=Math.max(1,d-DAILY_GAP); back<d; back++) dailyByNumber(back).forEach(f=>recent.add(f.properties.name));
-    dailyCache[d]=pickDaily(dayKeyFor(d), recent);
+    dailyCache[d]=pickDaily(dayKeyFor(d), recent, d);
   }
   return dailyCache[n];
 }
@@ -631,11 +654,11 @@ function deal(key,n,pool=POOLS[key]){
 
 // level banner (Easy / Medium / Hard / Pro): if a result banner is still up, wait until it clears
 let pendingLevel=null;
-function showBanner(t){
-  if(rb.classList.contains("show")){ pendingLevel=t; return; }
+function showBanner(t, m=MULT[t]){
+  if(rb.classList.contains("show")){ pendingLevel=[t,m]; return; }
   pendingLevel=null;
   const b=$("banner");
-  b.className="banner t"+t; b.innerHTML=`<div class="lv">${TIER_NAME[t]}</div><div class="mx">×${MULT[t]} points</div>`;
+  b.className="banner t"+t; b.innerHTML=`<div class="lv">${TIER_NAME[t]}</div><div class="mx">×${m} points</div>`;
   void b.offsetWidth; b.classList.add("show");
 }
 
@@ -643,10 +666,11 @@ function newGame(){
   stopConfetti(); pendingLevel=null;
   state.streak=0;
   state.daily = state.diff==="daily";
+  state.legacy = state.daily && dayNumber() < DAILY_V2_FROM;
   $("shareBox").classList.add("hidden"); $("again").textContent="Play again"; $("again").className="btn primary";
   if(state.daily){
     state.dailyKey=dayKey(); state.queue=dailyQueue(state.dailyKey);
-    state.rounds=state.queue.length; state.maxScore=state.queue.reduce((s,f)=>s+3*MULT[tierOf(f)],0);
+    state.rounds=state.queue.length; state.maxScore=maxFor(state.queue);
     const saved=loadDaily();
     state.round=0; state.score=0; state.results=[];
     $("gamePanel").classList.remove("hidden"); $("endPanel").classList.add("hidden");
@@ -670,10 +694,10 @@ function newGame(){
     const pool=playable.filter(f=>f.region===state.region);
     state.queue=deal("region_"+state.region, ROUNDS, pool).sort((a,b)=>tierOf(a)-tierOf(b));
   } else state.queue = state.diff==="classic"
-    ? [...deal("easy",3), ...deal("medium",3), ...deal("hard",3), ...deal("pro",1)]
+    ? [...deal("easy",2), ...deal("medium",2), ...deal("hard",2), ...deal("pro",2), ...deal("genius",2)]
     : deal(state.diff,ROUNDS);
   state.rounds=state.queue.length;
-  state.maxScore = state.queue.reduce((s,f)=>s+3*MULT[tierOf(f)],0);
+  state.maxScore = maxFor(state.queue);
   state.round=0; state.score=0; state.results=[];
   $("gamePanel").classList.remove("hidden"); $("endPanel").classList.add("hidden");
   // warm the flag cache for this game
@@ -684,8 +708,8 @@ function newGame(){
 function newRound(){
   if(state.round>=state.rounds) return showEnd();
   current=state.queue[state.round]; state.round++;
-  if(state.diff==="classic"||state.daily||state.region!=="Global"){ const prev=state.queue[state.round-2]; if(!prev || tierOf(prev)!==tierOf(current)) showBanner(tierOf(current)); }
-  state.res={name:current.display,iso:current.iso,r:[null,null,null],pts:0,tier:tierOf(current),mult:MULT[tierOf(current)]};
+  if(state.diff==="classic"||state.daily||state.region!=="Global"){ const prev=state.queue[state.round-2]; if(!prev || tierFor(prev)!==tierFor(current)) showBanner(tierFor(current), multFor(current)); }
+  state.res={name:current.display,iso:current.iso,r:[null,null,null],pts:0,tier:tierFor(current),mult:multFor(current)};
   state.results.push(state.res);
   landEls.forEach(p=>p.setAttribute("class","land"+(p.__f===current?" target":"")));
   goToTarget(current);
@@ -804,6 +828,7 @@ function finishStage(right, picked){
   }
   let cls = right?"good":"bad";
   if(right){ res.pts+=res.mult; state.score+=res.mult; if(state.stage!==1) msg+=` +${res.mult}`; }
+  if(state.stage===2 && res.r.every(Boolean) && bonusNow()){ res.pts+=bonusNow(); state.score+=bonusNow(); res.bonus=true; msg+=` +${bonusNow()} bonus`; }
   if(state.stage===2) msg+=` (${res.pts} point${res.pts===1?"":"s"} for ${current.display})`;
   // Daily: after all three parts of a country, toast it and share a fun fact
   if(state.stage===2 && state.daily){ const fx=FACTS[current.properties.name];
@@ -891,7 +916,7 @@ let rbTimer=null;
 function hideResult(){
   clearTimeout(rbTimer); rb.classList.remove("show");
   // then show a level banner that was waiting, once the result banner has faded out
-  if(pendingLevel!=null){ const t=pendingLevel; setTimeout(()=>{ if(pendingLevel===t && !rb.classList.contains("show")) showBanner(t); },380); }
+  if(pendingLevel!=null){ const q=pendingLevel; setTimeout(()=>{ if(pendingLevel===q && !rb.classList.contains("show")) showBanner(q[0],q[1]); },380); }
 }
 rb.onclick=hideResult;
 function showResult(kind, title, sub){
@@ -900,7 +925,7 @@ function showResult(kind, title, sub){
   rb.className="resultbanner "+kind;
   rb.innerHTML=`<div class="rt">${title}</div>${sub?`<div class="rs">${sub}</div>`:""}`;
   void rb.offsetWidth; rb.classList.add("show");
-  const ms=Math.min(5000, Math.max(2400, 1600+55*(title.length+(sub||"").length)));
+  const ms=Math.round(0.7*Math.min(5000, Math.max(2400, 1600+55*(title.length+(sub||"").length))));
   clearTimeout(rbTimer); rbTimer=setTimeout(hideResult, ms);
 }
 
@@ -908,9 +933,9 @@ const centerOf=el=>{ const r=(el||$("feedback")).getBoundingClientRect(); return
 function replay(el,cls){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function jolt(el){ replay(el,"shake"); buzz([30,40,30]); }
 // "+2" floats up from the answer, then glides into the score, which bumps
-function flyPoints(text, from){
+function flyPoints(text, from, kind){
   const [x,y]=centerOf(from), [tx,ty]=centerOf($("scorePill"));
-  const d=document.createElement("div"); d.className="flypts"; d.textContent=text; d.style.left=x+"px"; d.style.top=y+"px";
+  const d=document.createElement("div"); d.className="flypts"+(kind?" "+kind:""); d.textContent=text; d.style.left=x+"px"; d.style.top=y+"px";
   document.body.appendChild(d);
   const done=()=>{ d.remove(); replay($("scorePill"),"bump"); };
   if(reduceMotion || !d.animate){ setTimeout(done,600); return; }
@@ -935,7 +960,8 @@ function celebrate(right, perfectCountry, res, picked){
   const streak = state.streak>=3 ? ` · 🔥 ${state.streak} in a row` : "";
   if(perfectCountry){
     sfx("perfect");   // confetti is saved for the final score
-    showResult("perfect", "Perfect! 🎉", `${res.pts} points for ${name}`);
+    showResult("perfect", "Perfect! 🎉", res.bonus ? `+1 bonus · ${res.pts} points for ${name}` : `${res.pts} points for ${name}`);
+    if(res.bonus) setTimeout(()=>flyPoints("+1 bonus", rb, "bonus"), 1100);
   } else {
     sfx("right");   // confetti is saved for a perfect country and the final score
     const pts=`+${res.mult} point${res.mult===1?"":"s"}`;
@@ -997,7 +1023,7 @@ function showEnd(){
   $("finalMsg").textContent=msg;
   $("finalBest").textContent = (isBest && prev ? `New best on ${modeLabel()}!` : `Best on ${modeLabel()}: ${Math.max(s,prev)}/${max}`);
   const mark=b=>`<i class="${b?"ok":"no"}">${b?"✓":"✗"}</i>`;
-  $("recap").innerHTML=state.results.map(r=>`<li><img src="${flagIso(r.iso)}" alt=""><span class="nm">${r.name}${r.mult>1?` <em class="x">×${r.mult}</em>`:""}</span><span class="mk">${r.r.map(mark).join("")}</span><b class="${r.pts===3*r.mult?"perfect":""}">+${r.pts}</b></li>`).join("");
+  $("recap").innerHTML=state.results.map(r=>`<li><img src="${flagIso(r.iso)}" alt=""><span class="nm">${r.name}${r.mult>1?` <em class="x">×${r.mult}</em>`:""}</span><span class="mk">${r.r.map(mark).join("")}</span><b class="${r.r.every(Boolean)?"perfect":""}">+${r.pts}</b></li>`).join("");
   $("gamePanel").classList.add("hidden"); $("endPanel").classList.remove("hidden");
   flyTo({rot:proj.rotate(),scale:R},900);
   setTimeout(()=>$("again").focus({preventScroll:true}),30);
@@ -1016,7 +1042,7 @@ function showDailyEnd(){
   $("finalMsg").textContent = s===max?"Perfect Daily! 🌍":pct>=.8?"Excellent geography!":pct>=.6?"Solid work.":pct>=.4?"Not bad.":"Tomorrow's a new map.";
   $("finalBest").textContent=`${dailyLabel(state.dailyKey)} · everyone gets the same 5 countries today`;
   const mark=b=>`<i class="${b?"ok":"no"}">${b?"✓":"✗"}</i>`;
-  $("recap").innerHTML=state.results.map(r=>`<li><img src="${flagIso(r.iso)}" alt=""><span class="nm">${r.name}${r.mult>1?` <em class="x">×${r.mult}</em>`:""}</span><span class="mk">${r.r.map(mark).join("")}</span><b class="${r.pts===3*r.mult?"perfect":""}">+${r.pts}</b></li>`).join("");
+  $("recap").innerHTML=state.results.map(r=>`<li><img src="${flagIso(r.iso)}" alt=""><span class="nm">${r.name}${r.mult>1?` <em class="x">×${r.mult}</em>`:""}</span><span class="mk">${r.r.map(mark).join("")}</span><b class="${r.r.every(Boolean)?"perfect":""}">+${r.pts}</b></li>`).join("");
   $("shareText").textContent=shareText(); $("shareMsg").textContent="";
   $("shareBox").classList.remove("hidden");
   $("again").textContent="Play Classic"; $("again").className="btn ghost";
